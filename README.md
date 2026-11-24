@@ -115,10 +115,10 @@ IUP_Quanzer_Qcar_KT_repo/
 
 ---
 
-## 3. Hardware & Platform Architecture
+## 3. Hardware, Fleet IP Table & Network Architecture Guide
 
 ### 3.1 Quanser QCar1 Physical Specifications
-* **Processor Target:** NVIDIA Jetson TX2 (Dual-core Denver 2 64-bit CPU + Quad-core ARM A57 complex).
+* **Processor Target:** NVIDIA Jetson TX2 (Dual-core Denver 2 64-bit CPU + Quad-core ARM Cortex-A57 complex).
 * **GPU Accelerator:** 256-core NVIDIA Pascal architecture GPU.
 * **Onboard DAQ / I/O:** Quanser QCar Data Acquisition card (connected via PCIe/SPI to Jetson).
 * **Vision Sensors:**
@@ -130,11 +130,175 @@ IUP_Quanzer_Qcar_KT_repo/
   * **Steering Servo:** PWM Channel 1000 ($\pm 0.5\,\text{rad}$ steering range, with neutral trim offset $\approx +0.05\,\text{rad}$).
   * **Vehicle Status:** Multi-color LED indicators on digital output channels.
 
-### 3.2 Network Topology & Target Configuration
-* **Local Subnet:** `192.168.2.x` (Host PC and QCar must be connected to the `Quanser_UVs` network).
-* **QCar1 Default IP:** `192.168.2.11` (or `.12`, `.13` depending on the physical car identifier).
-* **QUARC Target Manager URI:** `tcpip://192.168.2.11:17001`
-* **Real-Time Kernel:** Linux for Tegra (L4T R32.6.x / Ubuntu 18.04 LTS).
+---
+
+### 3.2 QCar Fleet Master IP Registry & Hostname Mapping
+
+Every vehicle in the physical fleet is assigned a static IP address on the dedicated laboratory wireless network:
+
+| Vehicle | Static IP Address | Default Hostname | User Account | Default Password | QUARC Target URI (Port 17001) | SSH Connection String |
+|---|---|---|---|---|---|---|
+| **QCar 1** | `192.168.2.11` | `qcar1` | `nvidia` | `nvidia` | `tcpip://192.168.2.11:17001` | `ssh nvidia@192.168.2.11` |
+| **QCar 2** | `192.168.2.12` | `qcar2` | `nvidia` | `nvidia` | `tcpip://192.168.2.12:17001` | `ssh nvidia@192.168.2.12` |
+| **QCar 3** | `192.168.2.13` | `qcar3` | `nvidia` | `nvidia` | `tcpip://192.168.2.13:17001` | `ssh nvidia@192.168.2.13` |
+
+> [!IMPORTANT]
+> **Fleet Scaling Rule:** When migrating Simulink models or Python scripts between cars, update **only the last octet** of the IP string (e.g., change `192.168.2.11` to `192.168.2.12` or `192.168.2.13`). All internal channel numbers, DAQ board IDs (`0`), and sensor paths remain identical across cars.
+
+---
+
+### 3.3 Network Topology & Host PC Configuration
+
+All communication occurs over an isolated, high-speed laboratory Wi-Fi network:
+
+```
+┌─────────────────────────────────┐           ┌─────────────────────────────────┐
+│     Host Development PC         │           │        Quanser QCar Fleet       │
+│  (Windows 10/11 + MATLAB R2022a)│           │       (NVIDIA Jetson TX2)       │
+│                                 │  802.11ac │                                 │
+│  IP: 192.168.2.100 (DHCP/Static)│◄─────────►│ QCar 1: 192.168.2.11            │
+│  Netmask: 255.255.255.0         │ Wi-Fi AP  │ QCar 2: 192.168.2.12            │
+│  SSID: Quanser_UVs              │           │ QCar 3: 192.168.2.13            │
+└─────────────────────────────────┘           └─────────────────────────────────┘
+```
+
+#### Network Parameters:
+* **Wi-Fi SSID:** `Quanser_UVs`
+* **Subnet:** `192.168.2.0/24`
+* **Subnet Mask:** `255.255.255.0`
+* **Default Gateway / AP Router:** `192.168.2.1`
+
+#### Host PC Network Setup:
+1. Connect your workstation's Wi-Fi adapter to the **`Quanser_UVs`** SSID.
+2. In most laboratory setups, the router assigns an IP via DHCP in the range `192.168.2.100` – `192.168.2.200`.
+3. If using a manual static IP on the Host PC:
+   * **IPv4 Address:** `192.168.2.100`
+   * **Subnet Mask:** `255.255.255.0`
+   * **Default Gateway:** `192.168.2.1`
+   * **DNS:** `8.8.8.8` (or leave blank if offline)
+
+---
+
+### 3.4 Remote Access Protocols: SSH, SCP & SFTP
+
+#### A. Interactive SSH Terminal
+Connect to the vehicle's onboard Linux terminal:
+```bash
+# Terminal (PowerShell, CMD, Git Bash, or Linux terminal)
+ssh nvidia@192.168.2.11
+
+# If prompted: "Are you sure you want to continue connecting (yes/no/[fingerprint])?" type: yes
+# Password: nvidia
+```
+
+#### B. Secure File Transfer (SCP)
+Deploy code or download logs between the Host PC and the vehicle:
+
+* **Push a project to QCar1:**
+  ```powershell
+  # From Host PC PowerShell:
+  scp -r C:\Users\Admin\Desktop\git\object_n_driving nvidia@192.168.2.11:/home/nvidia/
+  ```
+
+* **Push pk_app_tensorrt to QCar1:**
+  ```powershell
+  scp -r C:\Users\Admin\Desktop\git\pk_app_tensorrt nvidia@192.168.2.11:/home/nvidia/
+  ```
+
+* **Pull runtime logs / photos from QCar1 to Host PC:**
+  ```powershell
+  scp nvidia@192.168.2.11:/home/nvidia/object_n_driving/output/*.jpg C:\Users\Admin\Desktop\
+  ```
+
+#### C. GUI File Management (WinSCP)
+* **File Protocol:** `SFTP`
+* **Host Name:** `192.168.2.11`
+* **Port Number:** `22`
+* **User Name:** `nvidia`
+* **Password:** `nvidia`
+
+---
+
+### 3.5 QUARC Target Manager & Simulink External Mode Deployment
+
+When deploying Simulink models (`lane_following/`) to the physical vehicle, QUARC establishes a low-latency real-time telemetry link over TCP port **`17001`**.
+
+#### Configuration in Simulink (`Ctrl + E`):
+1. In the Simulink model window, press **`Ctrl + E`** to open **Model Configuration Parameters**.
+2. In the left navigation pane, select **Code Generation $\rightarrow$ Interface**.
+3. Set **Interface** to: `External mode`.
+4. Set **Transport layer** to: `tcpip`.
+5. In **MEX-file arguments**, paste the exact targeting string:
+   ```text
+   '-w -d /tmp -uri %u','tcpip://192.168.2.11:17001'
+   ```
+   *(To target QCar 2 or 3, change `192.168.2.11` to `192.168.2.12` or `192.168.2.13`).*
+6. In **Code Generation**, ensure **System target file** is set to **`quarc_linux_nvidia.tlc`**.
+7. Click **Apply** $\rightarrow$ **OK**.
+
+#### What Happens During Deployment (`Ctrl + B`):
+```
+[Host PC: Simulink .slx] 
+      │
+      ▼  Ctrl + B (Cross-Compiling via GCC aarch64)
+[.rt-linux_nvidia ARM64 Binary] 
+      │
+      ▼  TCP/IP Transfer to tcpip://192.168.2.11:17001
+[Jetson TX2: /tmp/ModelName] 
+      │
+      ▼  QUARC Target Manager Launches Process with Real-Time Priority
+[Vehicle Executes Hardware Loop at 500 Hz] 
+      │
+      ▼  External Mode TCP Telemetry Streams Back
+[Host PC Scopes & Sliders Update in Real-Time]
+```
+
+---
+
+### 3.6 Port Allocation & Service Matrix
+
+| Port | Protocol | Daemon / Service | Description | Direction |
+|---|---|---|---|---|
+| **22** | TCP | `sshd` (OpenSSH) | Remote shell terminal and SCP/SFTP file transfers | Host $\rightarrow$ QCar |
+| **17001** | TCP | `quarc_target` | QUARC Target Manager (binary deployment & External Mode telemetry) | Host $\rightarrow$ QCar |
+| **18001** | TCP | RPLIDAR Daemon | Quanser Stream Server streaming raw LiDAR packets (optional) | Host $\leftarrow$ QCar |
+| **18960** | TCP | `QCar_Workspace` | Virtual bridge socket (used ONLY in virtual QLabs simulation) | Localhost loopback |
+
+---
+
+### 3.7 Pre-Flight Network Verification & Diagnostic Cheatsheet
+
+Before running any autonomous drive or building code, run these verification commands on the Host PC:
+
+```powershell
+# 1. Verify basic ICMP reachability:
+ping -n 4 192.168.2.11
+
+# 2. Verify QUARC Target Manager is listening on port 17001:
+Test-NetConnection -ComputerName 192.168.2.11 -Port 17001
+
+# 3. Verify SSH server is listening on port 22:
+Test-NetConnection -ComputerName 192.168.2.11 -Port 22
+```
+
+If connecting via Linux/macOS:
+```bash
+ping -c 4 192.168.2.11
+nc -zv 192.168.2.11 17001
+nc -zv 192.168.2.11 22
+```
+
+---
+
+### 3.8 Network & Connectivity Troubleshooting Matrix
+
+| Symptom / Error | Root Cause | Exact Recovery Procedure |
+|---|---|---|
+| **`Destination host unreachable` / `Request timed out`** | Workstation is connected to the wrong Wi-Fi network or IP subnet mismatch. | 1. Open Windows Wi-Fi menu and ensure connected to **`Quanser_UVs`**.<br>2. Run `ipconfig` in PowerShell; verify IPv4 is `192.168.2.xxx`.<br>3. Power cycle QCar if vehicle Wi-Fi failed to associate. |
+| **`Test-NetConnection: Port 17001 Failed`** | QUARC Target Manager daemon on Jetson is stopped or vehicle battery died. | 1. SSH into car: `ssh nvidia@192.168.2.11`.<br>2. Check status: `sudo systemctl status quarc_target`.<br>3. Restart daemon: `sudo systemctl restart quarc_target`.<br>4. Check car battery voltage (must be $\ge 11.1\,\text{V}$). |
+| **`Host key verification failed` on SSH** | Another vehicle previously used the same IP, or Jetson OS was reflashed. | Clear the stale host key from your PC:<br>`ssh-keygen -R 192.168.2.11` |
+| **External Mode Scope lag / buffer overruns** | Streaming uncompressed, high-bandwidth camera frames over Wi-Fi. | In Simulink scope parameters, increase the **Decimation** factor (e.g., plot 1 out of every 10 samples) or use `Image Compress` block before streaming. |
+| **`QERR_CONNECTION_REFUSED` in Simulink** | MEX-file arguments contain the wrong IP or car number. | Press `Ctrl + E` $\rightarrow$ Code Generation $\rightarrow$ Interface $\rightarrow$ MEX-file arguments. Verify IP matches the car you are working with. |
 
 ---
 

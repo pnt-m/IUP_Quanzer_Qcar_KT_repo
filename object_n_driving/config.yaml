@@ -1,0 +1,56 @@
+# ============================================================
+# QCar1 Autonomous Navigation & TensorRT Perception (object_n_driving)
+# ============================================================
+# Platform: Quanser QCar1 (NVIDIA Jetson TX2 Pascal GPU)
+# Target Model: models/best_fp16.engine (7-Class TensorRT FP16)
+# ============================================================
+
+model:
+  path: "models/best_fp16.engine"
+  fallback_onnx: "models/best.onnx"
+  input_width: 640
+  input_height: 640
+  confidence_threshold: 0.35
+  iou_threshold: 0.45
+  target_classes: null      # null = detect all 7 classes
+
+camera:
+  mode: "dual"              # "dual" (CSI Front for lane, RealSense for objects)
+  csi_width: 640
+  csi_height: 480
+  csi_fps: 30
+  realsense_width: 640
+  realsense_height: 480
+  realsense_fps: 30
+
+depth:
+  scale: 1.0
+  min_distance: 0.2
+  max_distance: 8.0
+  roi_fraction: 0.5
+
+vehicle:
+  pwm_cruise: 0.15          # Calibrated cruise throttle (nominal ~0.38 m/s)
+  pwm_caution: 0.10         # Caution speed for Yellow / Yield / Crosswalk
+  pwm_min_moving: 0.08      # Minimum throttle floor to overcome mechanical stiction
+  cruise_speed: 0.35        # Nominal forward speed (m/s)
+  slow_speed: 0.18          # Caution speed (m/s)
+  motor_limit: 0.25         # Safety clamp for throttle
+  steer_bias: 0.05          # Physical steering trim (rad)
+  max_steer: 0.42           # Maximum steering angle (rad)
+  steer_rate_limit: 0.04    # Anti-surge steering slew (rad/frame)
+  stop_duration: 5.0        # Stop sign mandatory wait duration (5.0 seconds)
+  emergency_brake_dist: 1.5 # Pedestrian emergency stop distance (meters)
+  clearance_hold_time: 1.5  # Pedestrian clearing debounce (seconds)
+
+lateral:
+  stanley_k: 1.15           # Stanley cross-track error gain
+  stanley_v_soft: 0.05      # Speed softening factor
+  curvature_decay: 0.85     # Memory decay rate across unpainted crossings
+  m_per_pix: 0.00125        # Lookahead metric scale factor
+  slope_deadzone: 0.12      # Rejects horizontal crosswalk lines (|slope| < 0.12)
+  curb_threshold: 215       # Threshold for roundabout inner concrete curb
+
+display:
+  show_window: true
+  show_fps: true

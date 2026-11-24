@@ -1,0 +1,52 @@
+# ============================================================
+# QCar1 YOLO Pedestrian Detection (TensorRT Edition) - Configuration
+# ============================================================
+
+model:
+  # Path to the model. Defaults to the high-speed FP16 TensorRT engine.
+  # If the .engine file does not exist, the code automatically falls back
+  # to models/yolov5n.onnx if available.
+  path: models/yolov5n_fp16.engine
+
+  # Network input size (square). YOLOv5 default is 640x640.
+  input_width: 640
+  input_height: 640
+
+  # Minimum confidence (objectness * class score) to keep a detection.
+  confidence_threshold: 0.40
+
+  # IoU threshold used by Non-Maximum Suppression.
+  iou_threshold: 0.45
+
+  # COCO class id for "person" (class 0 = person in standard COCO).
+  person_class_id: 0
+
+camera:
+  # Passed directly to QCarRealSense(mode=...)
+  mode: "RGB, Depth"
+  frame_width: 640
+  frame_height: 480
+  frame_rate: 30
+
+depth:
+  # Metric conversion factor (calibrated for RealSense PX depth).
+  # Default is 1.0 (uncalibrated placeholder).
+  scale: 1.0
+
+  # Reject depth samples outside this metric range (meters).
+  min_distance: 0.2
+  max_distance: 10.0
+
+  # Region-of-interest fraction (inner 50% of the bounding box).
+  roi_fraction: 0.5
+
+display:
+  # Whether to show the OpenCV GUI display window.
+  # Can be overridden from command line via --no-display
+  show_window: true
+  show_fps: true
+  show_depth: false
+
+behavior:
+  # If true, only highlights the nearest detected person in the window
+  nearest_person_only: false

@@ -1,0 +1,43 @@
+# ============================================================
+# QCar1 YOLO Pedestrian Detection - Python dependencies
+# ============================================================
+#
+# IMPORTANT:
+# This project is designed to run INSIDE the existing QCar1
+# software environment (Jetson TX2, Ubuntu 18.04, Python 3.6.9,
+# L4T 32.6.1). The following packages are assumed to ALREADY be
+# present system-wide and must NOT be reinstalled or upgraded by
+# this project:
+#
+#   - numpy        (already installed, 1.19.4)
+#   - opencv-python (already installed as 'opencv', 4.5.5)
+#   - onnxruntime  (already installed, 1.10.0, CPU provider)
+#   - torch        (already installed, 1.10.0 - NOT required at
+#                    runtime by this project, only mentioned for
+#                    completeness / optional dev-machine export)
+#   - torchvision  (already installed, 0.11.0 - not required at
+#                    runtime by this project)
+#   - Quanser 'pal' / 'quanser' packages (already installed,
+#                    2023.4.13)
+#
+# Do NOT add version-pinned entries for the packages above here,
+# and do NOT run `pip install -U` on them. Doing so risks
+# breaking the existing QCar1 software stack.
+#
+# ------------------------------------------------------------
+# Additional packages required by THIS project:
+# ------------------------------------------------------------
+#
+# PyYAML is required to parse config.yaml. It is a small, pure
+# -Python-friendly package that is compatible with Python 3.6
+# and does not conflict with anything in the existing
+# environment. If PyYAML is already present system-wide (check
+# with `python3 -c "import yaml"`), this install is a no-op.
+
+PyYAML>=5.1,<6.0
+
+# No other additional packages are required. Everything else
+# used by this project (numpy, cv2, onnxruntime, argparse,
+# pathlib, time, os, sys, collections) is either part of the
+# Python 3.6 standard library or already present in the QCar1
+# system environment listed above.

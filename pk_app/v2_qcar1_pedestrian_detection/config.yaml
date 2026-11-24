@@ -1,0 +1,76 @@
+# ============================================================
+# QCar1 YOLO Pedestrian Detection - Configuration
+# ============================================================
+# All runtime-tunable parameters live here so that the Python
+# code does not need to be edited for routine adjustments.
+
+model:
+  # Path to the ONNX model, relative to the project root.
+  path: models/yolov5n.onnx
+
+  # Network input size (square). YOLOv5n default export is 640x640.
+  input_width: 640
+  input_height: 640
+
+  # Minimum confidence (objectness * class score) to keep a detection.
+  confidence_threshold: 0.40
+
+  # IoU threshold used by Non-Maximum Suppression.
+  iou_threshold: 0.45
+
+  # COCO class id for "person". This is fixed by the COCO dataset
+  # ordering used to train the model (class 0 = person) and should
+  # NOT be changed unless a differently-trained model is used.
+  person_class_id: 0
+
+camera:
+  # Passed directly to QCarRealSense(mode=...)
+  mode: "RGB, Depth"
+
+depth:
+  # ------------------------------------------------------------
+  # IMPORTANT: depth_scale converts the raw value returned by
+  # myCam.imageBufferDepthPX into METRIC METERS.
+  #
+  # The QCar1 example scripts shipped by Quanser display depth
+  # using a purely COSMETIC normalization:
+  #
+  #     display_frame = myCam.imageBufferDepthPX / max_distance
+  #
+  # That line is only used to squash values into the 0..1 range
+  # for cv2.imshow() and is NOT a calibrated metric conversion.
+  # It does NOT tell us the physical unit of imageBufferDepthPX.
+  #
+  # This project therefore does NOT assume a scale value. You
+  # MUST verify it against a real, physically-measured distance
+  # before trusting the printed "meters" value. See README.md
+  # section "14. Understanding Depth" for the calibration
+  # procedure.
+  #
+  # Until verified, depth_scale is set to 1.0, which means the
+  # code will treat the raw QCarRealSense depth values as-is.
+  # A depth_scale of 1.0 is a PLACEHOLDER, not a verified
+  # calibration.
+  # ------------------------------------------------------------
+  scale: 1.0
+
+  # Reject depth samples outside this metric range (meters).
+  # Applied AFTER depth_scale is applied.
+  min_distance: 0.2
+  max_distance: 10.0
+
+  # Fraction (0-1) of the bounding box, centered on the box
+  # center, used as the region-of-interest for depth sampling.
+  # 0.5 means the inner 50% width/height of the box is sampled.
+  roi_fraction: 0.5
+
+display:
+  show_window: true
+  show_fps: true
+  show_depth: false
+
+behavior:
+  # If true, only the nearest detected pedestrian is highlighted
+  # (drawn with a distinct color / label). This is a DISPLAY
+  # convenience only and is NOT a safety system.
+  nearest_person_only: false

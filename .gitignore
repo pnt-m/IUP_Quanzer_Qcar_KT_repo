@@ -1,0 +1,99 @@
+# ====================================================================
+# .gitignore for IUP_Quanzer_Qcar_KT_repo
+# Quanser QCar Autonomy, Deep Learning & Real-Time Control Suite
+# ====================================================================
+
+# --------------------------------------------------------------------
+# 1. Python Environment & Bytecode
+# --------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+myvenv/
+
+# --------------------------------------------------------------------
+# 2. NVIDIA TensorRT, CUDA & Machine Learning Artifacts
+# --------------------------------------------------------------------
+# Hardware-compiled TensorRT execution plans (must be built locally on Jetson target)
+*.engine
+*.trt
+*.plan
+runs/
+
+# --------------------------------------------------------------------
+# 3. MATLAB, Simulink & QUARC Build Artifacts
+# --------------------------------------------------------------------
+# Simulink Compilation Cache & Project directories
+slprj/
+*.slxc
+
+# QUARC Target Compilation Directories & Code Generation
+*_quarc_linux_nvidia/
+*_quarc_win64/
+*_rtw/
+*.dmr
+buildInfo.mat
+compileInfo.mat
+rtwtypeschksum.mat
+rtw_proj.tmw
+
+# MATLAB Editor & Backup files
+*.asv
+*.bak
+*.orig_bak
+*~
+
+# --------------------------------------------------------------------
+# 4. C/C++ Intermediate & Object Files
+# --------------------------------------------------------------------
+*.o
+*.obj
+*.d
+*.a
+*.lib
+
+# --------------------------------------------------------------------
+# 5. OS & Editor Artifacts
+# --------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --------------------------------------------------------------------
+# 6. Logs & Ephemeral Runtime Outputs
+# --------------------------------------------------------------------
+*.log
+qcar_motor_log.txt
